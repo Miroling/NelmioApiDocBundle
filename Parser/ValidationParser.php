@@ -68,8 +68,9 @@ class ValidationParser implements ParserInterface, PostParserInterface
     public function parse(array $input)
     {
         $className = $input['class'];
+        $groups    = $input['groups'];
 
-        return $this->doParse($className, array());
+        return $this->doParse($className, array(), $groups);
     }
 
     /**
@@ -77,9 +78,10 @@ class ValidationParser implements ParserInterface, PostParserInterface
      *
      * @param  $className
      * @param  array $visited
+     * @param  array $groups Validation groups to include.
      * @return array
      */
-    protected function doParse($className, array $visited)
+    protected function doParse($className, array $visited, array $groups = array())
     {
         $params = array();
         $classdata = $this->factory->getMetadataFor($className);
@@ -90,7 +92,7 @@ class ValidationParser implements ParserInterface, PostParserInterface
 
         foreach ($properties as $property) {
             $vparams = array();
-
+            
             $vparams['default'] = isset($defaults[$property]) ? $defaults[$property] : null;
 
             $pds = $classdata->getPropertyMetadata($property);
@@ -98,7 +100,17 @@ class ValidationParser implements ParserInterface, PostParserInterface
                 $constraints = $propdata->getConstraints();
 
                 foreach ($constraints as $constraint) {
-                    $vparams = $this->parseConstraint($constraint, $vparams, $className, $visited);
+
+                    // If validation groups was defined
+                    if (count($groups) > 0 && isset($constraint->groups) && count($constraint->groups) > 0
+                        && count(array_intersect($groups, $constraint->groups)) > 0){
+                        $vparams = $this->parseConstraint($constraint, $vparams, $className, $visited);
+                    } else if (count($groups) > 0) {
+                        continue 3;
+                    } else {
+                        $vparams = $this->parseConstraint($constraint, $vparams, $className, $visited);
+                    }
+
                 }
             }
 
