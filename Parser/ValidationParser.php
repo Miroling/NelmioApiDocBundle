@@ -68,7 +68,7 @@ class ValidationParser implements ParserInterface, PostParserInterface
     public function parse(array $input)
     {
         $className = $input['class'];
-        $groups    = $input['groups'];
+        isset($input['groups'])? $groups = $input['groups'] : $groups = array();
 
         return $this->doParse($className, array(), $groups);
     }
@@ -101,15 +101,15 @@ class ValidationParser implements ParserInterface, PostParserInterface
 
                 foreach ($constraints as $constraint) {
 
-                    // If validation groups was defined
-                    if (count($groups) > 0 && isset($constraint->groups) && count($constraint->groups) > 0
-                        && count(array_intersect($groups, $constraint->groups)) > 0){
-                        $vparams = $this->parseConstraint($constraint, $vparams, $className, $visited);
-                    } else if (count($groups) > 0) {
-                        continue 3;
-                    } else {
-                        $vparams = $this->parseConstraint($constraint, $vparams, $className, $visited);
+                    // If validation groups was defined, exclude all constraints without groups
+                    if (count($groups) > 0){
+                        if(!(isset($constraint->groups) && count($constraint->groups) > 0
+                            && count(array_intersect($groups, $constraint->groups)) > 0)){
+                            continue 3;
+                        }
                     }
+
+                    $vparams = $this->parseConstraint($constraint, $vparams, $className, $visited);
 
                 }
             }
@@ -213,6 +213,9 @@ class ValidationParser implements ParserInterface, PostParserInterface
             case 'Time':
                 $vparams['format'][] = '{Time HH:MM:SS}';
                 $vparams['actualType'] = DataTypes::TIME;
+                break;
+            case 'GreaterThan':
+                $vparams['format'][] = '{value > ' . $constraint->value . '}';
                 break;
             case 'Length':
                 $messages = array();

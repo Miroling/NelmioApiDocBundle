@@ -121,7 +121,11 @@ abstract class AbstractFormatter implements FormatterInterface
      */
     protected function processAnnotation($annotation)
     {
-        if (isset($annotation['parameters'])) {
+        if (isset($annotation['parameters'])
+            && isset($annotation['input']['collection'])
+            && $annotation['input']['collection'] == true) {
+            $annotation['parameters'] = $this->compressNestedParameters($annotation['parameters']);
+        } else if (isset($annotation['parameters'])) {
             $annotation['parameters'] = $this->compressNestedParameters($annotation['parameters'], null, true);
         }
 

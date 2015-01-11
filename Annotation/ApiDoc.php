@@ -621,6 +621,14 @@ class ApiDoc
             $data['parameters'] = $parameters;
         }
 
+        if ($input = $this->input) {
+            $data['input'] = $input;
+        }
+
+        if ($output = $this->output) {
+            $data['output'] = $output;
+        }
+
         if ($requirements = $this->requirements) {
             $data['requirements'] = $requirements;
         }
